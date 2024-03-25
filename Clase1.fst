@@ -2,6 +2,7 @@ module Clase1
 
 (* Hace que '*' sea la multiplicación de enteros, en vez del constructor de tuplas. *)
 open FStar.Mul
+open FStar.List.Tot
 
 let suma (x y : int) : int = x + y
 
@@ -40,8 +41,7 @@ let incr'''' (x:int{par x}) : y:int{impar y} = x + 1
 (* ¿Por qué falla la siguiente definición? Arreglarla. *)
 // El atributo expect_failure causa que F* chequeé que la definición
 // subsiguiente falle. Borrarlo para ver el error real.
-[@@expect_failure]
-let muldiv (a : int) (b : int{b <> 0}) : y:int{y = a} = (a / b) * b
+let muldiv (a : int) (b : int{b <> 0 && a % b = 0}) : y:int{y = a} = (a / b) * b
 
 (* Defina una función de valor absoluto *)
 let abs (x:int) : nat = if x < 0 then - x else x
@@ -88,10 +88,17 @@ let rec triang (n:nat) : nat = n + (if n > 0 then triang (n-1) else 0)
 
 (* Intente darle un tipo a fib que diga que el resultado es siempre
 mayor o igual al argumento. Si el chequeo falla, dé hipótesis de por qué. *)
-// let rec fib' (n:nat) = ...
+let rec fib' (x:nat) : (y:nat{y >= x}) = 
+   if x = 0 then 1 
+   else if x = 1 then 1 
+   else if x  = 2 then 2 
+   else fib' (x-1) + fib' (x - 2)
 
 (* Idem para la función factorial. *)
-//let fac' : ... = ...
+let rec fac' (x:int) : (y:pos{y >= x})= 
+   if x <= 0 then 1
+   else if x = 1 then 1
+   else x * fac' (x-1)
 
 (* Defina la siguiente función que suma una lista de enteros. *)
 val sum_int : list int -> int
@@ -111,4 +118,4 @@ let rec append xs ys = match xs with
 val rev_int : list int -> list int
 let rec rev_int xs = match xs with
    | []       -> []
-   | x :: xs' -> append (rev_int xs') [x]
+   | x :: xs' -> (rev_int xs') @ [x]
