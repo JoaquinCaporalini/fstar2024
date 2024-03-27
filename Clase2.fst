@@ -96,6 +96,7 @@ let neutro_yy' (#a:Type) : a -> yy a verd =
 (* La disjunción conmuta *)
 (* `function` es azúcar para `fun` con un pattern matching inmediato al argumento. *)
 let comm_oo (#a #b : Type) : oo a b -> oo b a =
+ //fun xy -> match xy with
   function
   | Inl x -> Inr x
   | Inr y -> Inl y
@@ -107,11 +108,14 @@ let ex_falso (#a:Type) (f : falso) : a =
 
 (* Demostrar *)
 let neu1 (#a:Type) : oo a falso -> a =
-  admit()
+  function
+  | Inl x -> x
 
 (* Demostrar *)
 let neu2 (#a:Type) : a -> oo a falso =
-  admit()
+  fun (x:a) -> Inl x  
+
+(* Demostrar *)
 
 (* Distribución de `yy` sobre `oo`, en ambas direcciones *)
 let distr_yyoo_1 (#a #b #c : Type)
@@ -125,53 +129,108 @@ let distr_yyoo_1 (#a #b #c : Type)
   | Inr z -> Inr (x, z)
 
 let distr_yyoo_2 (#a #b #c : Type)
+  // (a /\ b) \/ (a /\ c)  ==>  a /\ (b \/ c) 
+  // (a * b) + (a * c)     ==>  a * (b + c)    
   : oo (yy a b) (yy a c) -> yy a (oo b c)
 =
-  admit()
+  fun abc ->
+  match abc with
+  | Inl (a, b) -> (a, Inl b) // (a /\ b) esto es verdad
+  | Inr (a, c) -> (a, Inr c) // (a /\ c) esto es verdad
+
 
 let distr_ooyy_1 (#a #b #c : Type)
   : oo a (yy b c) -> yy (oo a b) (oo a c)
+  // a \/ (b /\ c)  ==>  (a \/ b) /\ (a /\ c)
+  // a * (b + c)    ==>  (a * b) + (a * c)
 =
-  admit()
+  fun xyz ->
+  match xyz with
+  | Inl x -> (Inl x, Inl x)
+  | Inr (y, z) -> (Inr y, Inr z)
 
 let distr_ooyy_2 (#a #b #c : Type)
   : yy (oo a b) (oo a c) -> oo a (yy b c)
+  // (a \/ b) /\ (a \/ c)  ==>  a \/ (b /\ c) 
+  // (a * b) + (a * c)     ==>  a * (b + c) 
 =
-  admit()
+  function
+  | Inl a, _ -> Inl a
+  | _, Inl a -> Inl a
+  | Inr b, Inr c -> Inr (b,c)
+  // fun (xy, xz) ->
+  // match xy with
+  // | Inl x -> Inl x
+  // | Inr y -> match xz with
+  //           | Inl x -> Inl x      // Che, esto esta mal. 
+  //                                 // Si este caso fuera posible deberia entar en el primer match
+  //                                 // Si no lo pones dice que el match esta incompleto.
+  //           | Inr z -> Inr (y, z)
 
 let modus_tollens (#a #b : Type)
+// : (a -> b) -> (b -> flaso) -> (a -> falso)
   : (a -> b) -> (no b -> no a)
+  // a -> b, ¬b |= ¬a
 =
-  admit()
-  (* Vale la recíproca? *)
+  // fun (f : a -> b) (nb : no b) (a : a) -> nb (f a)
+  fun f g a -> g (f a)
+  (* Vale la recíproca? *) // no, no vale... nos falta algo para construir o un falso o algo de tipo falso
+                           // en general Wen log int. por loas negaciones.
+
 
 let modus_tollendo_ponens (#a #b : Type)
   : (oo a b) -> (no a -> b)
+  // p \/ q |= ¬p => q
 =
-  admit()
+  // admit()
+  fun (p : oo a b) (na : no a) -> 
+    match p with
+    | Inl a -> ex_falso (na a) 
+    | Inr b -> b
   (* Vale la recíproca? *)
 
 let modus_ponendo_tollens (#a #b : Type)
   : no (yy a b) -> (a -> no b)
+  // : ((yy a b) -> falso) -> (a -> b -> falso)
+  // ¬(p /\ q) |= p => ¬q
 =
-  admit()
+  fun nab a b -> nab (a, b)
+
+  // admit()
   (* Vale la recíproca? *)
 
 (* Declare y pruebe, si es posible, las leyes de De Morgan
 para `yy` y `oo`. ¿Son todas intuicionistas? *)
 
 let demorgan1_ida (#a #b : Type) : oo (no a) (no b) -> no (yy a b) =
-  admit()
+// ¬a \/ ¬b => ¬(a /\ b)
+  fun (p : oo (no a) (no b)) (ab : yy a b) -> 
+    match ab with
+    | (a, b) -> 
+      match p with
+      | Inl na -> na a
+      | Inr nb -> nb b
 
 let demorgan1_vuelta (#a #b : Type) : no (yy a b) -> oo (no a) (no b) =
-  admit()
+  // ¬ (a /\ b) |= ¬a \/ ¬b
+  admit() // No es valida en la logoca intucionista
 
 let demorgan2_ida (#a #b : Type) : yy (no a) (no b) -> no (oo a b) =
-  admit()
+// ¬a /\ ¬b => ¬(a \/ b)
+  fun (ab : yy (no a) (no b)) (aob:oo a b) ->
+    match ab with
+    | (na, nb) -> 
+      match aob with
+      | Inl a -> na a
+      | Inr b -> nb b
 
 let demorgan2_vuelta (#a #b : Type) : no (oo a b) -> yy (no a) (no b) =
-  admit()
-
+  // : ((oo a b) -> falso) -> yy (a -> falso) (b -> falso) 
+  // ¬(a \/ b) => ¬(a \/ b)
+  fun f -> 
+    let na : no a = fun a -> f (Inl a) in
+    let nb : no b = fun b -> f (Inr b) in
+    (na, nb)
 
  (* P y no P no pueden valer a la vez. *)
 let no_contradiccion (#a:Type) : no (yy a (no a)) =
@@ -188,15 +247,34 @@ let elim_triple_neg (#a:Type) : no (no (no a)) -> no a =
 
 (* Ejercicio. ¿Se puede en lógica intuicionista? *)
 let ley_impl1 (p q : Type) : (p -> q) -> oo (no p) q =
-  admit()
+//                                          (p -> false)
+  fun f -> 
+    let o' : oo q (no q) = magic() in
+    match o' with
+    | Inl q -> Inr q
+    | Inr nq -> Inl (fun p -> nq (f p))
 
 (* Ejercicio. ¿Se puede en lógica intuicionista? *)
 let ley_impl2 (p q : Type) : oo (no p) q -> (p -> q) =
-  admit()
+  //                            (p -> false)
+  function
+  | Inl pn -> fun p -> ex_falso (pn p)
+  | Inr q -> fun _ -> q
 
 (* Ejercicio. ¿Se puede en lógica intuicionista? *)
 let ley_impl3 (p q : Type) : no (p -> q) -> yy p (no q) =
-  admit()
+//                           (p -> q -> false) -> yy p (no q)
+  fun f ->
+    let ponp : oo p (no p) = magic() in
+    let qonq : oo q (no q) = magic() in
+    match qonq with
+    | Inl q -> ex_falso (f (fun p -> q))
+    | Inr nq -> 
+      match ponp with
+      | Inl p -> (p, nq)
+      | Inr np -> 
+        let fn : p -> q = fun p -> ex_falso (np p) in
+        ex_falso (f fn)
 
 (* Ejercicio. ¿Se puede en lógica intuicionista? *)
 let ley_impl4 (p q : Type) : yy p (no q) -> no (p -> q) =
