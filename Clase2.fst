@@ -278,7 +278,9 @@ let ley_impl3 (p q : Type) : no (p -> q) -> yy p (no q) =
 
 (* Ejercicio. ¿Se puede en lógica intuicionista? *)
 let ley_impl4 (p q : Type) : yy p (no q) -> no (p -> q) =
-  admit()
+  // yy p (q -> false) -> (p -> q) -> falso
+  function
+  | (p,nq) -> fun f -> nq (f p)
 
 (* Tipos para axiomas clásicos *)
 type eliminacion_doble_neg = (#a:Type) -> no (no a) -> a
