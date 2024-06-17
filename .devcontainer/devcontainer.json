@@ -23,5 +23,6 @@
   },
   // These run only when the container is assigned to a user
   "postCreateCommand": {
-  }
+  },
+  "remoteUser": "vscode"
 }
