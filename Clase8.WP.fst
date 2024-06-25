@@ -261,10 +261,9 @@ let rec cwp_ok (p:stmt) (post : cond)
       let he : hoare pree e post = cwp_ok e post in
       let prooft = () <: squash (forall s . (fun s -> pre s /\ (eval_expr s c == 0)) s ==> pret s) in
       let proofe = () <: squash (forall s. (fun s -> pre s /\ (eval_expr s c =!= 0)) s ==> pree s) in
-      let pt = hoare_strengthen_pre pret (fun s -> pre s /\ (eval_expr s c == 0)) t post prooft in
-      let pe = hoare_strengthen_pre pree (fun s -> pre s /\ (eval_expr s c =!= 0)) e post proofe in
-      // H_If pt pe
-      admit()
+      let pt = hoare_strengthen_pre pret (fun s -> pre s /\ (eval_expr s c == 0)) t post prooft ht in
+      let pe = hoare_strengthen_pre pree (fun s -> pre s /\ (eval_expr s c =!= 0)) e post proofe he in
+      H_If pt pe
 
 (* Agregar 1 a x. *)
 let add1 =
